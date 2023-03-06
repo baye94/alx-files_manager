@@ -11,12 +11,16 @@ class RedisClient {
     });
   }
 
-  isAlive() {
-    const id = this.client.connection_id;
-    if (!id) {
-      return false;
-    }
-    return true;
+  async isAlive() {
+    return new Promise((resolve, reject) => {
+      this.client.ping((err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response === 'PONG');
+        }
+      });
+    });
   }
 
   async get(key) {
@@ -36,4 +40,6 @@ class RedisClient {
   }
 }
 
-module.exports = new RedisClient();
+const redisClient = new RedisClient();
+
+module.exports = redisClient;

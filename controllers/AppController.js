@@ -1,20 +1,16 @@
-// Logic for endpoints
-
-const redisClient = require('../utils/redis');
-const dbClient = require('../utils/db');
+import redisClient from '../utils/redis';
+import dbClient from '../utils/db';
 
 class AppController {
-  getStatus(req, res) {
-    this.dbStatus = dbClient.isAlive();
-    this.redisStatus = redisClient.isAlive();
-    res.status(200).send({ redis: this.redisStatus, db: this.dbStatus });
+  static getStatus(request, response) {
+    response.status(200).json({ redis: redisClient.isAlive(), db: dbClient.isAlive() });
   }
 
-  async getStats(req, res) {
-    this.users = await dbClient.nbUsers();
-    this.files = await dbClient.nbFiles();
-    res.status(200).send({ users: this.users, files: this.files });
+  static async getStats(request, response) {
+    const usersNum = await dbClient.nbUsers();
+    const filesNum = await dbClient.nbFiles();
+    response.status(200).json({ users: usersNum, files: filesNum });
   }
 }
 
-module.exports = new AppController();
+module.exports = AppController;

@@ -1,73 +1,37 @@
-// Database module to handle database operations
+import { MongoClient } from 'mongodb';
 
-const { MongoClient } = require('mongodb');
+const HOST = process.env.DB_HOST || 'localhost';
+const PORT = process.env.DB_PORT || 27017;
+const DATABASE = process.env.DB_DATABASE || 'files_manager';
+
+const url = `mongodb://${HOST}:${PORT}`;
 
 class DBClient {
   constructor() {
-    const host = process.env.DB_HOST || 'localhost';
-    const port = process.env.DB_PORT || 27017;
-    const database = process.env.DB_DATABASE || 'files_manager';
-    const uri = `mongodb://${host}:${port}`;
-    const client = new MongoClient(uri);
-    client.connect();
-    this.client = client;
-    this.database = database;
+    this.client = new MongoClient(url, { useUnifiedTopology: true, useNewUrlParser: true });
+    this.client.connect().then(() => {
+      this.db = this.client.db(`${DATABASE}`);
+    }).catch((err) => {
+      console.log(err);
+    });
   }
 
   isAlive() {
-    const id = this.client.connection_id;
-    if (!id) {
-      return true;
-    }
-    return true;
+    return this.client.isConnected();
   }
 
   async nbUsers() {
-    const db = this.client.db(this.database);
-    const collection = db.collection('users');
-    const users = await collection.find({}).toArray();
-    return users.length;
+    const users = this.db.collection('users');
+    const usersNum = await users.countDocuments();
+    return usersNum;
   }
 
   async nbFiles() {
-    const db = this.client.db(this.database);
-    const collection = db.collection('files');
-    const files = await collection.find({}).toArray();
-    return files.length;
-  }
-
-  async add(collectionName, obj) {
-    const db = this.client.db(this.database);
-    const collection = db.collection(collectionName);
-    const user = await collection.insertOne(obj);
-    return user;
-  }
-
-  async get(collectionName, obj) {
-    const db = this.client.db(this.database);
-    const collection = db.collection(collectionName);
-    const documentArray = await collection.find(obj).toArray();
-    return documentArray;
-  }
-
-  async put(collectionName, obj, newAttribute) {
-    const db = this.client.db(this.database);
-    const collection = db.collection(collectionName);
-    const documentArray = await collection.updateOne(obj, { $set: newAttribute });
-    return documentArray.matchedCount;
-  }
-
-  async paginate(collectionName, page, obj) {
-    const db = this.client.db(this.database);
-    const collection = db.collection(collectionName);
-    const pipeline = [
-      { $match: obj },
-      { $skip: page * 20 },
-      { $limit: 20 },
-    ];
-    const documentArray = await collection.aggregate(pipeline).toArray();
-    return documentArray;
+    const files = this.db.collection('files');
+    const filesNum = await files.countDocuments();
+    return filesNum;
   }
 }
 
-module.exports = new DBClient();
+const dbClient = new DBClient();
+module.exports = dbClient;

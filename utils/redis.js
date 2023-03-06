@@ -1,13 +1,10 @@
-// Redis class to control storage
-
 const redis = require('redis');
-
 const util = require('util');
 
 class RedisClient {
   constructor() {
     const client = redis.createClient();
-    client.on('error', () => console.log());
+    client.on('error', (err) => console.log(err));
     this.client = client;
     client.on('connect', () => {
       this.client = client;
@@ -17,7 +14,7 @@ class RedisClient {
   isAlive() {
     const id = this.client.connection_id;
     if (!id) {
-      return true;
+      return false;
     }
     return true;
   }
